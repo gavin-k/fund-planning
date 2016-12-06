@@ -1,55 +1,30 @@
-Yii 2 Advanced Project Template
+理财计划
 ===============================
 
-Yii 2 Advanced Project Template is a skeleton [Yii 2](http://www.yiiframework.com/) application best for
-developing complex Web applications with multiple tiers.
-
-The template includes three tiers: front end, back end, and console, each of which
-is a separate Yii application.
-
-The template is designed to work in a team development environment. It supports
-deploying the application in different environments.
-
-Documentation is at [docs/guide/README.md](docs/guide/README.md).
-
-[![Latest Stable Version](https://poser.pugx.org/yiisoft/yii2-app-advanced/v/stable.png)](https://packagist.org/packages/yiisoft/yii2-app-advanced)
-[![Total Downloads](https://poser.pugx.org/yiisoft/yii2-app-advanced/downloads.png)](https://packagist.org/packages/yiisoft/yii2-app-advanced)
-[![Build Status](https://travis-ci.org/yiisoft/yii2-app-advanced.svg?branch=master)](https://travis-ci.org/yiisoft/yii2-app-advanced)
-
-DIRECTORY STRUCTURE
+为什么开始这个计划?
 -------------------
+本来我有一个 `财务本` 用于每个月现金流的划分.
+我的理财理念就是: ***以基金的方式来管理财务.***
+举个例子: 
+> 我有 `储蓄基金`、`教育基金`、`旅游基金`(每个基金的职能和费率都由自己来定.)
+`储蓄基金`: 用于储蓄, 防范未来的风险.
+`教育基金`: 用于投资自己, 比如想学吉他🎸  等项目.
+`旅游基金`: 专门用于游玩的.
+除此以外, 应该还有一个 `流动资金`(日常开支使用);
+现在进账:100,000¥. 
+- 储蓄基金(25%) 进账: 25,000¥.
+- 教育基金(8%) 进账: 8,000¥.
+- 旅游基金(10%) 进账: 10,000¥.
+- 剩下的则归 流动资金: 57,000¥
 
-```
-common
-    config/              contains shared configurations
-    mail/                contains view files for e-mails
-    models/              contains model classes used in both backend and frontend
-    tests/               contains tests for common classes    
-console
-    config/              contains console configurations
-    controllers/         contains console controllers (commands)
-    migrations/          contains database migrations
-    models/              contains console-specific model classes
-    runtime/             contains files generated during runtime
-backend
-    assets/              contains application assets such as JavaScript and CSS
-    config/              contains backend configurations
-    controllers/         contains Web controller classes
-    models/              contains backend-specific model classes
-    runtime/             contains files generated during runtime
-    tests/               contains tests for backend application    
-    views/               contains view files for the Web application
-    web/                 contains the entry script and Web resources
-frontend
-    assets/              contains application assets such as JavaScript and CSS
-    config/              contains frontend configurations
-    controllers/         contains Web controller classes
-    models/              contains frontend-specific model classes
-    runtime/             contains files generated during runtime
-    tests/               contains tests for frontend application
-    views/               contains view files for the Web application
-    web/                 contains the entry script and Web resources
-    widgets/             contains frontend widgets
-vendor/                  contains dependent 3rd-party packages
-environments/            contains environment-based overrides
-```
+要是每个月都有这样的现金流收入的话,那是非常可观的. 但是你不可能就放到银行的储蓄存款之内的地方的,那是对资金的浪费,况且RMB一直都在贬值.所以你应该把这些钱拿去做投资.(某宝, 银行理财产品, 股票, 基金等等地方).
+但是现在有一个问题: 你或许会将 一个基金的钱投入到不同的理财产品中.但是难免会和其他基金的钱混在一起.提收益的时候,每个相关基金的基金都要按照钱的不同,进行收益分配.
+
+所以我现在是以创建一个程序的方案来解决这个问题.
+
+
+
+
+
+
+
