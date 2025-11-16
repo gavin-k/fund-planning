@@ -11,6 +11,9 @@ use yii\helpers\Url;
 /* @var $monthlyReturn float */
 /* @var $recentIncomes common\models\Income[] */
 /* @var $recentInvestments common\models\Investment[] */
+/* @var $healthScore array */
+/* @var $suggestions array */
+/* @var $activeGoals common\models\FinancialGoal[] */
 /* @var $fundChartData string */
 /* @var $trendChartData string */
 /* @var $investmentChartData string */
@@ -121,6 +124,124 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.um
         </div>
     </div>
 
+    <!-- 财务健康评分卡片 -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-<?= $healthScore['total_score'] >= 75 ? 'success' : ($healthScore['total_score'] >= 60 ? 'info' : 'warning') ?>">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="glyphicon glyphicon-heart"></i> 财务健康评分
+                        <a href="<?= Url::to(['analysis/index']) ?>" class="pull-right" style="color: white; text-decoration: underline;">
+                            查看详细分析 <i class="glyphicon glyphicon-chevron-right"></i>
+                        </a>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div style="font-size: 60px; font-weight: bold; color: <?= $healthScore['total_score'] >= 75 ? '#5cb85c' : ($healthScore['total_score'] >= 60 ? '#5bc0de' : '#f0ad4e') ?>;">
+                                <?= $healthScore['total_score'] ?>
+                            </div>
+                            <div style="font-size: 20px; margin-top: -10px;">分</div>
+                            <div style="margin-top: 10px;">
+                                <span class="label label-<?= $healthScore['total_score'] >= 75 ? 'success' : ($healthScore['total_score'] >= 60 ? 'info' : 'warning') ?>" style="font-size: 14px;">
+                                    <?= Html::encode($healthScore['rating']) ?>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <?php foreach ($healthScore['details'] as $key => $detail): ?>
+                                <?php
+                                $maxScore = ($key === 'saving') ? 30 : (($key === 'diversification' || $key === 'stability') ? 25 : 20);
+                                $percentage = ($detail['score'] / $maxScore) * 100;
+                                $colorClass = $percentage >= 80 ? 'success' : ($percentage >= 60 ? 'info' : 'warning');
+                                ?>
+                                <div style="margin-bottom: 10px;">
+                                    <div class="clearfix">
+                                        <small class="pull-left"><strong><?= Html::encode($detail['description']) ?></strong></small>
+                                        <small class="pull-right"><?= $detail['score'] ?>/<?= $maxScore ?></small>
+                                    </div>
+                                    <div class="progress" style="height: 18px; margin-bottom: 0;">
+                                        <div class="progress-bar progress-bar-<?= $colorClass ?>" style="width: <?= $percentage ?>%;">
+                                            <?= round($percentage, 0) ?>%
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 智能建议 -->
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="glyphicon glyphicon-lightbulb"></i> 智能理财建议
+                    </h3>
+                </div>
+                <div class="panel-body" style="max-height: 300px; overflow-y: auto;">
+                    <?php if (!empty($suggestions)): ?>
+                        <?php foreach ($suggestions as $suggestion): ?>
+                            <div class="alert alert-<?= $suggestion['type'] ?>" style="margin-bottom: 10px; padding: 10px;">
+                                <strong><?= Html::encode($suggestion['title']) ?></strong>
+                                <p style="margin: 5px 0 0 0; font-size: 12px;"><?= Html::encode($suggestion['message']) ?></p>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <p class="text-muted">暂无建议。您的财务状况良好！</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 财务目标进度 -->
+    <?php if (!empty($activeGoals)): ?>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="glyphicon glyphicon-flag"></i> 进行中的财务目标
+                    <a href="<?= Url::to(['goal/index']) ?>" class="pull-right">
+                        查看全部 <i class="glyphicon glyphicon-chevron-right"></i>
+                    </a>
+                </h3>
+            </div>
+            <div class="panel-body">
+                <?php foreach ($activeGoals as $goal): ?>
+                    <?php
+                    $progress = $goal->getProgress();
+                    $colorClass = $progress >= 75 ? 'success' : ($progress >= 50 ? 'info' : ($progress >= 25 ? 'warning' : 'danger'));
+                    ?>
+                    <div class="row" style="margin-bottom: 15px;">
+                        <div class="col-md-3">
+                            <strong><?= Html::a(Html::encode($goal->name), ['goal/view', 'id' => $goal->id]) ?></strong>
+                            <br>
+                            <small class="text-muted">目标日期: <?= Html::encode($goal->target_date) ?></small>
+                        </div>
+                        <div class="col-md-3 text-right">
+                            <span style="font-size: 14px;">
+                                ¥<?= number_format($goal->current_amount, 2) ?> / ¥<?= number_format($goal->target_amount, 2) ?>
+                            </span>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="progress" style="margin-bottom: 5px;">
+                                <div class="progress-bar progress-bar-<?= $colorClass ?>" style="width: <?= min(100, $progress) ?>%;">
+                                    <?= round($progress, 0) ?>%
+                                </div>
+                            </div>
+                            <small class="text-muted">
+                                剩余 <?= $goal->getRemainingDays() ?> 天 • 建议月储蓄 ¥<?= number_format($goal->getSuggestedMonthlySaving(), 2) ?>
+                            </small>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <!-- 各基金余额一览 -->
     <div class="panel panel-default">
         <div class="panel-heading">
@@ -132,7 +253,7 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.um
             <?php if (!empty($funds)): ?>
                 <?php foreach ($funds as $fund): ?>
                     <?php
-                        $percentage = $totalAssets > 0 ? ($fund->balance / $totalAssets * 100) : 0;
+                        $percentage = $totalAssets > 0 ? ($fund->current_balance / $totalAssets * 100) : 0;
                         $progressBarClass = 'progress-bar-success';
                         if ($percentage < 5) {
                             $progressBarClass = 'progress-bar-danger';
@@ -143,11 +264,11 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.um
                     <div class="row" style="margin-bottom: 15px;">
                         <div class="col-md-3">
                             <strong><?= Html::a(Html::encode($fund->name), ['fund/view', 'id' => $fund->id]) ?></strong>
-                            <small class="text-muted">(分配比例: <?= $fund->allocation_percentage ?>%)</small>
+                            <small class="text-muted">(分配比例: <?= $fund->allocation_percent ?>%)</small>
                         </div>
                         <div class="col-md-3 text-right">
                             <span class="text-success" style="font-size: 16px;">
-                                <strong>¥<?= number_format($fund->balance, 2) ?></strong>
+                                <strong>¥<?= number_format($fund->current_balance, 2) ?></strong>
                             </span>
                         </div>
                         <div class="col-md-6">

@@ -10,7 +10,9 @@ use common\models\Fund;
 use common\models\Investment;
 use common\models\Income;
 use common\models\ReturnRecord;
+use common\models\FinancialGoal;
 use backend\components\ChartHelper;
+use backend\components\AnalysisHelper;
 
 /**
  * Site controller
@@ -66,12 +68,12 @@ class SiteController extends Controller
     public function actionIndex()
     {
         // 1. 总资产统计
-        $totalAssets = Fund::find()->sum('balance') ?: 0;
+        $totalAssets = Fund::find()->sum('current_balance') ?: 0;
 
         // 2. 各基金余额
         $funds = Fund::find()
-            ->select(['id', 'name', 'balance', 'allocation_percentage'])
-            ->orderBy(['allocation_percentage' => SORT_DESC])
+            ->select(['id', 'name', 'current_balance', 'allocation_percent'])
+            ->orderBy(['allocation_percent' => SORT_DESC])
             ->all();
 
         // 3. 总投资金额
@@ -87,7 +89,7 @@ class SiteController extends Controller
         // 5. 本月收益
         $monthlyReturn = ReturnRecord::find()
             ->where(['>=', 'return_date', date('Y-m-01')])
-            ->sum('amount') ?: 0;
+            ->sum('total_amount') ?: 0;
 
         // 6. 最近收入记录（最近5条）
         $recentIncomes = Income::find()
@@ -101,7 +103,20 @@ class SiteController extends Controller
             ->limit(5)
             ->all();
 
-        // 8. 图表数据
+        // 8. 财务健康评分（新增）
+        $healthScore = AnalysisHelper::getFinancialHealthScore();
+
+        // 9. 智能建议（新增，最多显示3条）
+        $suggestions = array_slice(AnalysisHelper::getFinancialSuggestions(), 0, 3);
+
+        // 10. 财务目标进度（新增，最多显示3条进行中的目标）
+        $activeGoals = FinancialGoal::find()
+            ->where(['status' => FinancialGoal::STATUS_IN_PROGRESS])
+            ->orderBy(['target_date' => SORT_ASC])
+            ->limit(3)
+            ->all();
+
+        // 11. 图表数据
         $fundChartData = json_encode(ChartHelper::getFundBalanceChartData());
         $trendChartData = json_encode(ChartHelper::getMonthlyReturnTrendData());
         $investmentChartData = json_encode(ChartHelper::getInvestmentDistributionData());
@@ -114,6 +129,9 @@ class SiteController extends Controller
             'monthlyReturn' => $monthlyReturn,
             'recentIncomes' => $recentIncomes,
             'recentInvestments' => $recentInvestments,
+            'healthScore' => $healthScore,
+            'suggestions' => $suggestions,
+            'activeGoals' => $activeGoals,
             'fundChartData' => $fundChartData,
             'trendChartData' => $trendChartData,
             'investmentChartData' => $investmentChartData,
