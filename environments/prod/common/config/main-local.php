@@ -7,7 +7,7 @@ return [
             'charset' => 'utf8',
         ],
         'mailer' => [
-            'class' => 'yii\swiftmailer\Mailer',
+            'class' => 'yii\symfonymailer\Mailer',
             'viewPath' => '@common/mail',
         ],
     ],
