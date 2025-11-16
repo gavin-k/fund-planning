@@ -133,6 +133,47 @@ class FundController extends Controller
     }
 
     /**
+     * Export funds data to CSV
+     */
+    public function actionExport()
+    {
+        $query = Fund::find()->orderBy(['id' => SORT_ASC]);
+
+        // 设置响应头
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=funds_export_' . date('Y-m-d') . '.csv');
+
+        // 打开输出流
+        $output = fopen('php://output', 'w');
+
+        // 输出 BOM 头，解决 Excel 打开中文乱码问题
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+
+        // 输出表头
+        fputcsv($output, ['ID', '基金名称', '分配比例(%)', '当前余额', '已投资金额', '可用余额', '状态', '创建时间']);
+
+        // 输出数据
+        foreach ($query->each() as $fund) {
+            $investedAmount = $fund->getInvestedAmount();
+            $availableBalance = $fund->getAvailableBalance();
+
+            fputcsv($output, [
+                $fund->id,
+                $fund->name,
+                $fund->allocation_percentage,
+                $fund->balance,
+                $investedAmount,
+                $availableBalance,
+                $fund->status == Fund::STATUS_ACTIVE ? '启用' : '禁用',
+                date('Y-m-d H:i:s', $fund->created_at),
+            ]);
+        }
+
+        fclose($output);
+        exit;
+    }
+
+    /**
      * Finds the Fund model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
      * @param integer $id

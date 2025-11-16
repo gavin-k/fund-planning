@@ -19,6 +19,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <p>
         <?= Html::a('记录收入', ['create'], ['class' => 'btn btn-success']) ?>
+        <?= Html::a('<i class="glyphicon glyphicon-export"></i> 导出数据', ['export'], ['class' => 'btn btn-info']) ?>
     </p>
 
     <?= GridView::widget([

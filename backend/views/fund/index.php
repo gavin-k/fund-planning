@@ -15,6 +15,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <p>
         <?= Html::a('创建基金', ['create'], ['class' => 'btn btn-success']) ?>
+        <?= Html::a('<i class="glyphicon glyphicon-export"></i> 导出数据', ['export'], ['class' => 'btn btn-info']) ?>
     </p>
 
     <?= GridView::widget([
@@ -25,15 +26,17 @@ $this->params['breadcrumbs'][] = $this->title;
             'id',
             'name',
             [
-                'attribute' => 'allocation_percent',
+                'attribute' => 'allocation_percentage',
+                'label' => '分配比例',
                 'value' => function ($model) {
-                    return $model->allocation_percent . '%';
+                    return $model->allocation_percentage . '%';
                 },
             ],
             [
-                'attribute' => 'current_balance',
+                'attribute' => 'balance',
+                'label' => '当前余额',
                 'value' => function ($model) {
-                    return '¥' . number_format($model->current_balance, 2);
+                    return '¥' . number_format($model->balance, 2);
                 },
             ],
             [
