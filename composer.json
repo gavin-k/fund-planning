@@ -26,7 +26,10 @@
         "yiisoft/yii2-faker": "~2.0.0"
     },
     "config": {
-        "process-timeout": 1800
+        "process-timeout": 1800,
+        "allow-plugins": {
+            "yiisoft/yii2-composer": true
+        }
     },
     "extra": {
         "asset-installer-paths": {
