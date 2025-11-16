@@ -17,13 +17,17 @@
         "php": ">=7.4.0",
         "yiisoft/yii2": "~2.0.50",
         "yiisoft/yii2-bootstrap": "~2.0.11",
-        "yiisoft/yii2-swiftmailer": "~2.1.0",
+        "yiisoft/yii2-symfonymailer": "~2.0.4",
         "yidas/yii2-bower-asset": "~2.0.13"
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.1.0",
         "yiisoft/yii2-gii": "~2.2.0",
-        "yiisoft/yii2-faker": "~2.0.0"
+        "yiisoft/yii2-faker": "~2.0.0",
+        "codeception/codeception": "^5.0",
+        "codeception/verify": "^3.0",
+        "codeception/module-asserts": "^3.0",
+        "codeception/module-yii2": "^1.0"
     },
     "config": {
         "process-timeout": 1800,

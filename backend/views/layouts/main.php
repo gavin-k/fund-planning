@@ -28,22 +28,29 @@ AppAsset::register($this);
 <div class="wrap">
     <?php
     NavBar::begin([
-        'brandLabel' => 'My Company',
+        'brandLabel' => '理财计划系统',
         'brandUrl' => Yii::$app->homeUrl,
         'options' => [
             'class' => 'navbar-inverse navbar-fixed-top',
         ],
     ]);
     $menuItems = [
-        ['label' => 'Home', 'url' => ['/site/index']],
+        ['label' => '首页', 'url' => ['/site/index']],
     ];
+    if (!Yii::$app->user->isGuest) {
+        $menuItems[] = ['label' => '基金管理', 'url' => ['/fund/index']];
+        $menuItems[] = ['label' => '理财产品', 'url' => ['/product/index']];
+        $menuItems[] = ['label' => '收入管理', 'url' => ['/income/index']];
+        $menuItems[] = ['label' => '投资管理', 'url' => ['/investment/index']];
+        $menuItems[] = ['label' => '收益管理', 'url' => ['/return/index']];
+    }
     if (Yii::$app->user->isGuest) {
-        $menuItems[] = ['label' => 'Login', 'url' => ['/site/login']];
+        $menuItems[] = ['label' => '登录', 'url' => ['/site/login']];
     } else {
         $menuItems[] = '<li>'
             . Html::beginForm(['/site/logout'], 'post')
             . Html::submitButton(
-                'Logout (' . Yii::$app->user->identity->username . ')',
+                '退出 (' . Yii::$app->user->identity->username . ')',
                 ['class' => 'btn btn-link logout']
             )
             . Html::endForm()

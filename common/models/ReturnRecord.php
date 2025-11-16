@@ -150,14 +150,16 @@ class ReturnRecord extends ActiveRecord
             $distributedTotal = 0;
             $distributions = [];
             $fundIds = array_keys($fundInvestments);
+            $fundCount = count($fundInvestments);
+            $currentIndex = 0;
 
-            foreach ($fundInvestments as $index => $fundInvestment) {
-                $fundId = array_search($fundInvestment, $fundInvestments);
+            foreach ($fundInvestments as $fundId => $fundInvestment) {
                 $investedAmount = $fundInvestment['amount'];
                 $fund = $fundInvestment['fund'];
+                $currentIndex++;
 
                 // 计算分配比例和金额
-                if ($index === count($fundInvestments) - 1) {
+                if ($currentIndex === $fundCount) {
                     // 最后一个基金，使用剩余金额避免精度问题
                     $returnAmount = $this->total_amount - $distributedTotal;
                     $percent = ($totalInvestment > 0) ? ($investedAmount / $totalInvestment) * 100 : 0;
