@@ -11,6 +11,7 @@ use common\models\Investment;
 use common\models\Income;
 use common\models\ReturnRecord;
 use common\models\FinancialGoal;
+use common\models\Budget;
 use backend\components\ChartHelper;
 use backend\components\AnalysisHelper;
 
@@ -116,7 +117,17 @@ class SiteController extends Controller
             ->limit(3)
             ->all();
 
-        // 11. 图表数据
+        // 11. 预算监控（新增，显示当前活跃的预算）
+        $activeBudgets = Budget::find()
+            ->with(['fund'])
+            ->where(['status' => Budget::STATUS_ACTIVE])
+            ->andWhere(['<=', 'start_date', date('Y-m-d')])
+            ->andWhere(['>=', 'end_date', date('Y-m-d')])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->limit(3)
+            ->all();
+
+        // 12. 图表数据
         $fundChartData = json_encode(ChartHelper::getFundBalanceChartData());
         $trendChartData = json_encode(ChartHelper::getMonthlyReturnTrendData());
         $investmentChartData = json_encode(ChartHelper::getInvestmentDistributionData());
@@ -132,6 +143,7 @@ class SiteController extends Controller
             'healthScore' => $healthScore,
             'suggestions' => $suggestions,
             'activeGoals' => $activeGoals,
+            'activeBudgets' => $activeBudgets,
             'fundChartData' => $fundChartData,
             'trendChartData' => $trendChartData,
             'investmentChartData' => $investmentChartData,

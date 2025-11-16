@@ -14,6 +14,7 @@ use yii\helpers\Url;
 /* @var $healthScore array */
 /* @var $suggestions array */
 /* @var $activeGoals common\models\FinancialGoal[] */
+/* @var $activeBudgets common\models\Budget[] */
 /* @var $fundChartData string */
 /* @var $trendChartData string */
 /* @var $investmentChartData string */
@@ -242,6 +243,92 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.um
         </div>
     <?php endif; ?>
 
+    <!-- 预算监控 -->
+    <?php if (!empty($activeBudgets)): ?>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="glyphicon glyphicon-dashboard"></i> 预算监控
+                    <a href="<?= Url::to(['budget/index']) ?>" class="pull-right">
+                        查看全部 <i class="glyphicon glyphicon-chevron-right"></i>
+                    </a>
+                </h3>
+            </div>
+            <div class="panel-body">
+                <?php foreach ($activeBudgets as $budget): ?>
+                    <?php
+                    $usageRate = $budget->getUsageRate();
+                    $statusLabel = $budget->getBudgetStatusLabel();
+                    $remaining = $budget->getRemainingBudget();
+                    $remainingDays = $budget->getRemainingDays();
+                    ?>
+                    <div class="row" style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+                        <div class="col-md-3">
+                            <strong>
+                                <?= Html::a(
+                                    $budget->fund ? Html::encode($budget->fund->name) : '<span class="label label-info">全局预算</span>',
+                                    ['budget/view', 'id' => $budget->id]
+                                ) ?>
+                            </strong>
+                            <br>
+                            <small class="text-muted">
+                                <?= Html::encode($budget->getPeriodTypeText()) ?>
+                                (<?= Html::encode($budget->start_date) ?> ~ <?= Html::encode($budget->end_date) ?>)
+                            </small>
+                            <br>
+                            <small class="text-muted">
+                                <i class="glyphicon glyphicon-time"></i> 剩余 <?= $remainingDays ?> 天
+                            </small>
+                        </div>
+                        <div class="col-md-3">
+                            <div style="padding: 10px; background: #f9f9f9; border-radius: 5px;">
+                                <div style="font-size: 18px; font-weight: bold; color: #337ab7;">
+                                    ¥<?= number_format($budget->budget_amount, 2) ?>
+                                </div>
+                                <div style="font-size: 11px; color: #777;">预算总额</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div style="padding: 10px; background: #f9f9f9; border-radius: 5px;">
+                                <div style="font-size: 18px; font-weight: bold; color: <?= $budget->isOverBudget() ? '#d9534f' : '#5cb85c' ?>;">
+                                    ¥<?= number_format($budget->actual_amount, 2) ?>
+                                </div>
+                                <div style="font-size: 11px; color: #777;">实际支出</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="progress" style="margin-bottom: 5px; height: 25px;">
+                                <div class="progress-bar progress-bar-<?= $statusLabel['class'] ?>"
+                                     style="width: <?= min(100, $usageRate) ?>%;">
+                                    <span style="line-height: 25px; font-weight: bold;">
+                                        <?= number_format($usageRate, 1) ?>%
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <span class="label label-<?= $statusLabel['class'] ?>">
+                                    <?= Html::encode($statusLabel['text']) ?>
+                                </span>
+                                <?php if ($budget->isOverBudget()): ?>
+                                    <br>
+                                    <small class="text-danger">
+                                        <i class="glyphicon glyphicon-exclamation-sign"></i>
+                                        超支 ¥<?= number_format($budget->getOverBudgetAmount(), 2) ?>
+                                    </small>
+                                <?php else: ?>
+                                    <br>
+                                    <small class="text-muted">
+                                        剩余 ¥<?= number_format($remaining, 2) ?>
+                                    </small>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <!-- 各基金余额一览 -->
     <div class="panel panel-default">
         <div class="panel-heading">
@@ -448,6 +535,11 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.um
                 '<i class="glyphicon glyphicon-shopping-cart"></i> 管理产品',
                 ['product/index'],
                 ['class' => 'btn btn-default btn-lg', 'style' => 'margin: 5px;']
+            ) ?>
+            <?= Html::a(
+                '<i class="glyphicon glyphicon-dashboard"></i> 创建预算',
+                ['budget/create'],
+                ['class' => 'btn btn-danger btn-lg', 'style' => 'margin: 5px;']
             ) ?>
         </div>
     </div>
