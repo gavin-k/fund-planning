@@ -151,6 +151,42 @@ class IncomeController extends Controller
     }
 
     /**
+     * Export income data to CSV
+     */
+    public function actionExport()
+    {
+        $query = Income::find()->orderBy(['income_date' => SORT_DESC, 'id' => SORT_DESC]);
+
+        // 设置响应头
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=income_export_' . date('Y-m-d') . '.csv');
+
+        // 打开输出流
+        $output = fopen('php://output', 'w');
+
+        // 输出 BOM 头，解决 Excel 打开中文乱码问题
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+
+        // 输出表头
+        fputcsv($output, ['ID', '收入日期', '收入金额', '备注', '是否已分配', '创建时间']);
+
+        // 输出数据
+        foreach ($query->each() as $income) {
+            fputcsv($output, [
+                $income->id,
+                $income->income_date,
+                $income->amount,
+                $income->note,
+                $income->is_distributed ? '是' : '否',
+                date('Y-m-d H:i:s', $income->created_at),
+            ]);
+        }
+
+        fclose($output);
+        exit;
+    }
+
+    /**
      * Finds the Income model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
      * @param integer $id

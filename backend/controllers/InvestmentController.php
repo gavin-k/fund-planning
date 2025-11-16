@@ -176,6 +176,42 @@ class InvestmentController extends Controller
     }
 
     /**
+     * Export investment data to CSV
+     */
+    public function actionExport()
+    {
+        $query = Investment::find()->orderBy(['created_at' => SORT_DESC]);
+
+        // 设置响应头
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=investment_export_' . date('Y-m-d') . '.csv');
+
+        // 打开输出流
+        $output = fopen('php://output', 'w');
+
+        // 输出 BOM 头，解决 Excel 打开中文乱码问题
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+
+        // 输出表头
+        fputcsv($output, ['ID', '基金', '理财产品', '投资金额', '状态', '创建时间']);
+
+        // 输出数据
+        foreach ($query->each() as $investment) {
+            fputcsv($output, [
+                $investment->id,
+                $investment->fund->name ?? '',
+                $investment->product->name ?? '',
+                $investment->amount,
+                $investment->status == Investment::STATUS_ACTIVE ? '生效中' : '已赎回',
+                date('Y-m-d H:i:s', $investment->created_at),
+            ]);
+        }
+
+        fclose($output);
+        exit;
+    }
+
+    /**
      * Finds the Investment model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
      * @param integer $id

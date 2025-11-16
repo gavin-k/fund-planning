@@ -155,6 +155,43 @@ class ReturnController extends Controller
     }
 
     /**
+     * Export return records data to CSV
+     */
+    public function actionExport()
+    {
+        $query = ReturnRecord::find()->orderBy(['return_date' => SORT_DESC, 'id' => SORT_DESC]);
+
+        // 设置响应头
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=return_records_export_' . date('Y-m-d') . '.csv');
+
+        // 打开输出流
+        $output = fopen('php://output', 'w');
+
+        // 输出 BOM 头，解决 Excel 打开中文乱码问题
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+
+        // 输出表头
+        fputcsv($output, ['ID', '理财产品', '收益金额', '收益日期', '备注', '是否已分配', '创建时间']);
+
+        // 输出数据
+        foreach ($query->each() as $return) {
+            fputcsv($output, [
+                $return->id,
+                $return->product->name ?? '',
+                $return->amount,
+                $return->return_date,
+                $return->note,
+                $return->is_distributed ? '是' : '否',
+                date('Y-m-d H:i:s', $return->created_at),
+            ]);
+        }
+
+        fclose($output);
+        exit;
+    }
+
+    /**
      * Finds the ReturnRecord model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
      * @param integer $id
