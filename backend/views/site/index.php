@@ -541,6 +541,11 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.um
                 ['budget/create'],
                 ['class' => 'btn btn-danger btn-lg', 'style' => 'margin: 5px;']
             ) ?>
+            <?= Html::a(
+                '<i class="glyphicon glyphicon-stats"></i> 财务报表',
+                ['report/index'],
+                ['class' => 'btn btn-success btn-lg', 'style' => 'margin: 5px;']
+            ) ?>
         </div>
     </div>
 </div>
