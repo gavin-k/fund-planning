@@ -86,23 +86,41 @@ class StatisticsController extends Controller
 
     /**
      * 计算各基金收益率
+     * 优化：使用 JOIN 查询，避免 N+1 问题
      */
     private function calculateFundReturns()
     {
+        // 一次性查询所有基金的投资总额
+        $investmentSql = "
+            SELECT fund_id, SUM(amount) as total
+            FROM investment
+            GROUP BY fund_id
+        ";
+        $investments = Yii::$app->db->createCommand($investmentSql)->queryAll();
+        $investmentMap = [];
+        foreach ($investments as $inv) {
+            $investmentMap[$inv['fund_id']] = (float)$inv['total'];
+        }
+
+        // 一次性查询所有基金的收益总额
+        $returnSql = "
+            SELECT fund_id, SUM(amount) as total
+            FROM return_distribution
+            GROUP BY fund_id
+        ";
+        $returns = Yii::$app->db->createCommand($returnSql)->queryAll();
+        $returnMap = [];
+        foreach ($returns as $ret) {
+            $returnMap[$ret['fund_id']] = (float)$ret['total'];
+        }
+
+        // 查询所有基金并构建结果
         $funds = Fund::find()->all();
         $result = [];
 
         foreach ($funds as $fund) {
-            // 该基金的总投资
-            $invested = Investment::find()
-                ->where(['fund_id' => $fund->id])
-                ->sum('amount') ?: 0;
-
-            // 该基金获得的总收益
-            $returns = ReturnDistribution::find()
-                ->where(['fund_id' => $fund->id])
-                ->sum('amount') ?: 0;
-
+            $invested = $investmentMap[$fund->id] ?? 0;
+            $returns = $returnMap[$fund->id] ?? 0;
             $rate = $invested > 0 ? ($returns / $invested * 100) : 0;
 
             $result[] = [

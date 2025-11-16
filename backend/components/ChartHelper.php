@@ -14,6 +14,21 @@ use Yii;
 class ChartHelper
 {
     /**
+     * 图表颜色常量
+     */
+    const CHART_COLORS = [
+        'rgba(255, 99, 132, 0.8)',   // 红
+        'rgba(54, 162, 235, 0.8)',   // 蓝
+        'rgba(255, 206, 86, 0.8)',   // 黄
+        'rgba(75, 192, 192, 0.8)',   // 青
+        'rgba(153, 102, 255, 0.8)',  // 紫
+        'rgba(255, 159, 64, 0.8)',   // 橙
+        'rgba(201, 203, 207, 0.8)',  // 灰
+        'rgba(255, 99, 71, 0.8)',    // 番茄红
+        'rgba(0, 191, 255, 0.8)',    // 深天蓝
+    ];
+
+    /**
      * 获取基金余额饼图数据
      * @return array
      */
@@ -26,17 +41,8 @@ class ChartHelper
 
         $labels = [];
         $data = [];
-        $backgroundColors = [
-            'rgba(255, 99, 132, 0.8)',   // 红
-            'rgba(54, 162, 235, 0.8)',   // 蓝
-            'rgba(255, 206, 86, 0.8)',   // 黄
-            'rgba(75, 192, 192, 0.8)',   // 青
-            'rgba(153, 102, 255, 0.8)',  // 紫
-            'rgba(255, 159, 64, 0.8)',   // 橙
-            'rgba(201, 203, 207, 0.8)',  // 灰
-        ];
 
-        foreach ($funds as $index => $fund) {
+        foreach ($funds as $fund) {
             if ($fund->balance > 0) {
                 $labels[] = $fund->name;
                 $data[] = (float)$fund->balance;
@@ -47,13 +53,14 @@ class ChartHelper
             'labels' => $labels,
             'datasets' => [[
                 'data' => $data,
-                'backgroundColor' => array_slice($backgroundColors, 0, count($data)),
+                'backgroundColor' => self::getColors(count($data)),
             ]],
         ];
     }
 
     /**
      * 获取近12个月收益趋势折线图数据
+     * 优化：一次性查询所有数据，避免 N+1 问题
      * @return array
      */
     public static function getMonthlyReturnTrendData()
@@ -62,22 +69,42 @@ class ChartHelper
         $incomeData = [];
         $returnData = [];
 
-        // 获取最近12个月
+        // 计算12个月前的日期
+        $startDate = date('Y-m-01', strtotime('-11 months'));
+
+        // 一次性查询所有收入数据并按月分组
+        $incomes = Income::find()
+            ->select(['DATE_FORMAT(income_date, "%Y-%m") as month', 'SUM(amount) as total'])
+            ->where(['>=', 'income_date', $startDate])
+            ->groupBy('DATE_FORMAT(income_date, "%Y-%m")')
+            ->asArray()
+            ->all();
+
+        // 一次性查询所有收益数据并按月分组
+        $returns = ReturnRecord::find()
+            ->select(['DATE_FORMAT(return_date, "%Y-%m") as month', 'SUM(amount) as total'])
+            ->where(['>=', 'return_date', $startDate])
+            ->groupBy('DATE_FORMAT(return_date, "%Y-%m")')
+            ->asArray()
+            ->all();
+
+        // 转换为以月份为键的数组
+        $incomeMap = [];
+        foreach ($incomes as $income) {
+            $incomeMap[$income['month']] = (float)$income['total'];
+        }
+
+        $returnMap = [];
+        foreach ($returns as $return) {
+            $returnMap[$return['month']] = (float)$return['total'];
+        }
+
+        // 生成最近12个月的数据
         for ($i = 11; $i >= 0; $i--) {
             $date = date('Y-m', strtotime("-$i month"));
             $labels[] = $date;
-
-            // 统计该月收入
-            $monthIncome = Income::find()
-                ->where(['like', 'income_date', $date])
-                ->sum('amount');
-            $incomeData[] = (float)($monthIncome ?: 0);
-
-            // 统计该月收益
-            $monthReturn = ReturnRecord::find()
-                ->where(['like', 'return_date', $date])
-                ->sum('amount');
-            $returnData[] = (float)($monthReturn ?: 0);
+            $incomeData[] = $incomeMap[$date] ?? 0.0;
+            $returnData[] = $returnMap[$date] ?? 0.0;
         }
 
         return [
@@ -161,16 +188,8 @@ class ChartHelper
 
         $labels = [];
         $data = [];
-        $backgroundColors = [
-            'rgba(255, 99, 132, 0.8)',
-            'rgba(54, 162, 235, 0.8)',
-            'rgba(255, 206, 86, 0.8)',
-            'rgba(75, 192, 192, 0.8)',
-            'rgba(153, 102, 255, 0.8)',
-            'rgba(255, 159, 64, 0.8)',
-        ];
 
-        foreach ($investments as $index => $inv) {
+        foreach ($investments as $inv) {
             $labels[] = $inv['name'];
             $data[] = (float)$inv['total'];
         }
@@ -179,42 +198,64 @@ class ChartHelper
             'labels' => $labels,
             'datasets' => [[
                 'data' => $data,
-                'backgroundColor' => array_slice($backgroundColors, 0, count($data)),
+                'backgroundColor' => self::getColors(count($data)),
             ]],
         ];
     }
 
     /**
      * 获取月度收支对比柱状图
+     * 优化：一次性查询所有数据，避免 N+1 问题
      * @param int $year 年份
      * @return array
      */
     public static function getMonthlyIncomeExpenseData($year = null)
     {
         if ($year === null) {
-            $year = date('Y');
+            $year = (int)date('Y');
         }
 
         $labels = [];
         $incomeData = [];
         $investmentData = [];
 
+        // 一次性查询该年度所有收入数据
+        $incomes = Income::find()
+            ->select(['MONTH(income_date) as month', 'SUM(amount) as total'])
+            ->where(['like', 'income_date', $year])
+            ->groupBy('MONTH(income_date)')
+            ->asArray()
+            ->all();
+
+        // 转换为以月份为键的数组
+        $incomeMap = [];
+        foreach ($incomes as $income) {
+            $incomeMap[(int)$income['month']] = (float)$income['total'];
+        }
+
+        // 一次性查询该年度所有投资数据
+        $yearStart = strtotime($year . '-01-01');
+        $yearEnd = strtotime(($year + 1) . '-01-01');
+
+        $investments = Investment::find()
+            ->select(['MONTH(FROM_UNIXTIME(created_at)) as month', 'SUM(amount) as total'])
+            ->where(['>=', 'created_at', $yearStart])
+            ->andWhere(['<', 'created_at', $yearEnd])
+            ->groupBy('MONTH(FROM_UNIXTIME(created_at))')
+            ->asArray()
+            ->all();
+
+        // 转换为以月份为键的数组
+        $investmentMap = [];
+        foreach ($investments as $investment) {
+            $investmentMap[(int)$investment['month']] = (float)$investment['total'];
+        }
+
+        // 生成12个月的数据
         for ($month = 1; $month <= 12; $month++) {
-            $yearMonth = sprintf('%04d-%02d', $year, $month);
             $labels[] = $month . '月';
-
-            // 收入
-            $income = Income::find()
-                ->where(['like', 'income_date', $yearMonth])
-                ->sum('amount');
-            $incomeData[] = (float)($income ?: 0);
-
-            // 投资（支出）
-            $investment = Investment::find()
-                ->where(['>=', 'created_at', strtotime($yearMonth . '-01')])
-                ->andWhere(['<', 'created_at', strtotime($yearMonth . '-01 +1 month')])
-                ->sum('amount');
-            $investmentData[] = (float)($investment ?: 0);
+            $incomeData[] = $incomeMap[$month] ?? 0.0;
+            $investmentData[] = $investmentMap[$month] ?? 0.0;
         }
 
         return [
@@ -232,5 +273,19 @@ class ChartHelper
                 ],
             ],
         ];
+    }
+
+    /**
+     * 获取颜色数组（循环使用，支持任意数量）
+     * @param int $count 需要的颜色数量
+     * @return array
+     */
+    private static function getColors($count)
+    {
+        $colors = [];
+        for ($i = 0; $i < $count; $i++) {
+            $colors[] = self::CHART_COLORS[$i % count(self::CHART_COLORS)];
+        }
+        return $colors;
     }
 }
