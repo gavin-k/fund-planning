@@ -43,6 +43,7 @@ AppAsset::register($this);
         $menuItems[] = ['label' => '收入管理', 'url' => ['/income/index']];
         $menuItems[] = ['label' => '投资管理', 'url' => ['/investment/index']];
         $menuItems[] = ['label' => '收益管理', 'url' => ['/return/index']];
+        $menuItems[] = ['label' => '统计分析', 'url' => ['/statistics/index']];
     }
     if (Yii::$app->user->isGuest) {
         $menuItems[] = ['label' => '登录', 'url' => ['/site/login']];

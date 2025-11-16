@@ -10,6 +10,7 @@ use common\models\Fund;
 use common\models\Investment;
 use common\models\Income;
 use common\models\ReturnRecord;
+use backend\components\ChartHelper;
 
 /**
  * Site controller
@@ -100,6 +101,11 @@ class SiteController extends Controller
             ->limit(5)
             ->all();
 
+        // 8. 图表数据
+        $fundChartData = json_encode(ChartHelper::getFundBalanceChartData());
+        $trendChartData = json_encode(ChartHelper::getMonthlyReturnTrendData());
+        $investmentChartData = json_encode(ChartHelper::getInvestmentDistributionData());
+
         return $this->render('index', [
             'totalAssets' => $totalAssets,
             'funds' => $funds,
@@ -108,6 +114,9 @@ class SiteController extends Controller
             'monthlyReturn' => $monthlyReturn,
             'recentIncomes' => $recentIncomes,
             'recentInvestments' => $recentInvestments,
+            'fundChartData' => $fundChartData,
+            'trendChartData' => $trendChartData,
+            'investmentChartData' => $investmentChartData,
         ]);
     }
 

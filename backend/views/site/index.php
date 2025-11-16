@@ -11,8 +11,16 @@ use yii\helpers\Url;
 /* @var $monthlyReturn float */
 /* @var $recentIncomes common\models\Income[] */
 /* @var $recentInvestments common\models\Investment[] */
+/* @var $fundChartData string */
+/* @var $trendChartData string */
+/* @var $investmentChartData string */
 
 $this->title = '理财计划 Dashboard';
+
+// 注册 Chart.js
+$this->registerJsFile('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js', [
+    'position' => \yii\web\View::POS_HEAD
+]);
 ?>
 
 <div class="site-index">
@@ -240,6 +248,53 @@ $this->title = '理财计划 Dashboard';
         </div>
     </div>
 
+    <!-- 数据可视化图表 -->
+    <div class="row">
+        <!-- 基金余额饼图 -->
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="glyphicon glyphicon-stats"></i> 基金余额分布
+                    </h3>
+                </div>
+                <div class="panel-body" style="height: 350px;">
+                    <canvas id="fundBalanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 投资产品分布柱状图 -->
+        <div class="col-md-8">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="glyphicon glyphicon-briefcase"></i> 投资产品分布
+                    </h3>
+                </div>
+                <div class="panel-body" style="height: 350px;">
+                    <canvas id="investmentDistChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 收益趋势折线图 -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="glyphicon glyphicon-signal"></i> 近12个月收入收益趋势
+                    </h3>
+                </div>
+                <div class="panel-body" style="height: 300px;">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 快捷操作 -->
     <div class="panel panel-default">
         <div class="panel-heading">
@@ -291,3 +346,95 @@ $this->title = '理财计划 Dashboard';
     color: #333;
 }
 </style>
+
+<?php
+// 注册图表初始化 JavaScript
+$this->registerJs(<<<JS
+// 基金余额饼图
+const fundCtx = document.getElementById('fundBalanceChart');
+if (fundCtx) {
+    new Chart(fundCtx, {
+        type: 'pie',
+        data: $fundChartData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            label += '¥' + context.parsed.toLocaleString('zh-CN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// 投资产品分布柱状图
+const invCtx = document.getElementById('investmentDistChart');
+if (invCtx) {
+    new Chart(invCtx, {
+        type: 'bar',
+        data: $investmentChartData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false,
+                },
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '¥' + value.toLocaleString('zh-CN');
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// 收益趋势折线图
+const trendCtx = document.getElementById('trendChart');
+if (trendCtx) {
+    new Chart(trendCtx, {
+        type: 'line',
+        data: $trendChartData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '¥' + value.toLocaleString('zh-CN');
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+JS
+, \yii\web\View::POS_READY);
+?>
