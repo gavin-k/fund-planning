@@ -150,7 +150,10 @@ class InvestmentTest extends \Codeception\Test\Unit
 
         // 验证余额变化
         $data['fund']->refresh();
-        $this->assertEquals($initialBalance + 5000, $data['fund']->current_balance, 'fund balance should increase by investment amount');
+        $this->assertEquals($initialBalance, $data['fund']->current_balance, 'withdrawal must preserve total assets');
+        $this->assertEquals($initialBalance, $data['fund']->getAvailableBalance(), 'withdrawal releases the principal for reuse');
+        $data['product']->refresh();
+        $this->assertEquals(0, $data['product']->current_amount);
     }
 
     /**
@@ -178,6 +181,52 @@ class InvestmentTest extends \Codeception\Test\Unit
 
         $this->assertFalse($result, 'second withdraw should fail');
         $this->assertArrayHasKey('status', $investment->errors, 'should have error on status');
+        $data['fund']->refresh();
+        $this->assertEquals(10000, $data['fund']->current_balance);
+        $this->assertEquals(10000, $data['fund']->getAvailableBalance());
+    }
+
+    public function testWithdrawingOneInvestmentKeepsOtherPrincipalReserved()
+    {
+        $data = $this->prepareTestData();
+        $investments = [];
+        foreach ([3000, 2000] as $amount) {
+            $investment = new Investment([
+                'fund_id' => $data['fund']->id,
+                'product_id' => $data['product']->id,
+                'amount' => $amount,
+                'investment_date' => '2024-01-01',
+            ]);
+            $this->assertTrue($investment->save());
+            $investments[] = $investment;
+        }
+        $this->assertTrue($investments[0]->withdraw());
+        $data['fund']->refresh();
+        $data['product']->refresh();
+        $this->assertEquals(10000, $data['fund']->current_balance);
+        $this->assertEquals(8000, $data['fund']->getAvailableBalance());
+        $this->assertEquals(2000, $data['fund']->getInvestedAmount());
+        $this->assertEquals(2000, $data['product']->current_amount);
+    }
+
+    public function testRepeatedInvestmentWithdrawalDoesNotCreateMoney()
+    {
+        $data = $this->prepareTestData();
+        for ($cycle = 0; $cycle < 3; $cycle++) {
+            $investment = new Investment([
+                'fund_id' => $data['fund']->id,
+                'product_id' => $data['product']->id,
+                'amount' => 10000,
+                'investment_date' => '2024-01-01',
+            ]);
+            $this->assertTrue($investment->save());
+            $data['fund']->refresh();
+            $this->assertEquals(0, $data['fund']->getAvailableBalance());
+            $this->assertTrue($investment->withdraw());
+            $data['fund']->refresh();
+            $this->assertEquals(10000, $data['fund']->current_balance);
+            $this->assertEquals(10000, $data['fund']->getAvailableBalance());
+        }
     }
 
     /**

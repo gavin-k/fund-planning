@@ -10,8 +10,9 @@ class HomeCest
     {
         $I->amOnPage(\Yii::$app->homeUrl);
         $I->see('My Company');
-        $I->seeLink('About');
-        $I->click('About');
-        $I->see('This is the About page.');
+        $I->seeLink('注册');
+        $I->seeLink('登录');
+        $I->click('登录');
+        $I->see('Login', 'h1');
     }
 }

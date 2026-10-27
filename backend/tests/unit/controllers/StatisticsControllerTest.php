@@ -50,6 +50,8 @@ class StatisticsControllerTest extends \Codeception\Test\Unit
     public function testActionIndexDefault()
     {
         $controller = new StatisticsController('statistics', Yii::$app);
+        $controller->layout = false;
+        Yii::$app->controller = $controller;
 
         // 模拟请求
         Yii::$app->request->setQueryParams([]);
@@ -58,7 +60,7 @@ class StatisticsControllerTest extends \Codeception\Test\Unit
 
         // 验证返回结果
         $this->assertNotNull($result, 'should return result');
-        $this->assertStringContainsString('index', $result, 'should render index view');
+        $this->assertStringContainsString('统计分析', $result, 'should render statistics view');
     }
 
     /**
@@ -67,6 +69,8 @@ class StatisticsControllerTest extends \Codeception\Test\Unit
     public function testActionIndexWithDateRange()
     {
         $controller = new StatisticsController('statistics', Yii::$app);
+        $controller->layout = false;
+        Yii::$app->controller = $controller;
 
         // 模拟请求
         Yii::$app->request->setQueryParams([
@@ -89,26 +93,27 @@ class StatisticsControllerTest extends \Codeception\Test\Unit
             'source' => '工资',
             'amount' => 10000,
             'income_date' => date('Y-m-15'),
-            'status' => Income::STATUS_DISTRIBUTED,
+            'is_distributed' => 1,
         ]);
         $income->save(false);
 
         $return = new ReturnRecord([
-            'source' => '投资收益',
-            'amount' => 500,
+            'product_id' => $this->createProduct()->id,
+            'total_amount' => 500,
             'return_date' => date('Y-m-20'),
-            'status' => ReturnRecord::STATUS_DISTRIBUTED,
+            'is_distributed' => 1,
         ]);
         $return->save(false);
 
         // 创建基金和投资
-        $fund = new Fund(['name' => '测试基金', 'allocation_percentage' => 100, 'balance' => 10000]);
+        $fund = new Fund(['name' => '测试基金', 'allocation_percent' => 100, 'current_balance' => 10000]);
         $fund->save(false);
 
-        $product = new InvestmentProduct(['name' => '产品', 'description' => '测试', 'status' => InvestmentProduct::STATUS_ACTIVE]);
+        $product = new InvestmentProduct(['type' => InvestmentProduct::TYPE_OTHER, 'name' => '产品', 'description' => '测试', 'status' => InvestmentProduct::STATUS_ACTIVE]);
         $product->save(false);
 
         $investment = new Investment([
+            'investment_date' => date('Y-m-d'),
             'fund_id' => $fund->id,
             'product_id' => $product->id,
             'amount' => 5000,
@@ -117,17 +122,20 @@ class StatisticsControllerTest extends \Codeception\Test\Unit
         $investment->save(false);
 
         $controller = new StatisticsController('statistics', Yii::$app);
+        $controller->layout = false;
+        Yii::$app->controller = $controller;
 
         // 设置当月时间范围
         Yii::$app->request->setQueryParams([
             'start_date' => date('Y-m-01'),
-            'end_date' => date('Y-m-d'),
+            'end_date' => date('Y-m-t'),
         ]);
 
         $result = $controller->actionIndex();
 
-        // 这里实际上会返回渲染的视图，但我们可以验证没有抛出异常
-        $this->assertNotNull($result, 'should return result');
+        $this->assertStringContainsString('10,000.00', $result);
+        $this->assertStringContainsString('500.00', $result);
+        $this->assertStringContainsString('5,000.00', $result);
     }
 
     /**
@@ -136,6 +144,8 @@ class StatisticsControllerTest extends \Codeception\Test\Unit
     public function testCalculateFundReturnsEmpty()
     {
         $controller = new StatisticsController('statistics', Yii::$app);
+        $controller->layout = false;
+        Yii::$app->controller = $controller;
 
         // 使用反射调用私有方法
         $reflection = new \ReflectionClass($controller);
@@ -154,18 +164,19 @@ class StatisticsControllerTest extends \Codeception\Test\Unit
     public function testCalculateFundReturnsWithData()
     {
         // 创建基金
-        $fund1 = new Fund(['name' => '基金A', 'allocation_percentage' => 50, 'balance' => 6000]);
+        $fund1 = new Fund(['name' => '基金A', 'allocation_percent' => 50, 'current_balance' => 6000]);
         $fund1->save(false);
 
-        $fund2 = new Fund(['name' => '基金B', 'allocation_percentage' => 50, 'balance' => 4500]);
+        $fund2 = new Fund(['name' => '基金B', 'allocation_percent' => 50, 'current_balance' => 4500]);
         $fund2->save(false);
 
         // 创建产品
-        $product = new InvestmentProduct(['name' => '产品', 'description' => '测试', 'status' => InvestmentProduct::STATUS_ACTIVE]);
+        $product = new InvestmentProduct(['type' => InvestmentProduct::TYPE_OTHER, 'name' => '产品', 'description' => '测试', 'status' => InvestmentProduct::STATUS_ACTIVE]);
         $product->save(false);
 
         // 创建投资记录
         $inv1 = new Investment([
+            'investment_date' => date('Y-m-d'),
             'fund_id' => $fund1->id,
             'product_id' => $product->id,
             'amount' => 5000,
@@ -174,6 +185,7 @@ class StatisticsControllerTest extends \Codeception\Test\Unit
         $inv1->save(false);
 
         $inv2 = new Investment([
+            'investment_date' => date('Y-m-d'),
             'fund_id' => $fund2->id,
             'product_id' => $product->id,
             'amount' => 4000,
@@ -183,18 +195,24 @@ class StatisticsControllerTest extends \Codeception\Test\Unit
 
         // 创建收益分配记录
         $dist1 = new ReturnDistribution([
+            'return_id' => $this->createReturn()->id,
+            'percent' => 100,
             'fund_id' => $fund1->id,
             'amount' => 500,
         ]);
         $dist1->save(false);
 
         $dist2 = new ReturnDistribution([
+            'return_id' => $this->createReturn()->id,
+            'percent' => 100,
             'fund_id' => $fund2->id,
             'amount' => 400,
         ]);
         $dist2->save(false);
 
         $controller = new StatisticsController('statistics', Yii::$app);
+        $controller->layout = false;
+        Yii::$app->controller = $controller;
 
         // 使用反射调用私有方法
         $reflection = new \ReflectionClass($controller);
@@ -226,10 +244,12 @@ class StatisticsControllerTest extends \Codeception\Test\Unit
     public function testCalculateFundReturnsNoInvestment()
     {
         // 创建基金但不创建投资
-        $fund = new Fund(['name' => '空基金', 'allocation_percentage' => 100, 'balance' => 1000]);
+        $fund = new Fund(['name' => '空基金', 'allocation_percent' => 100, 'current_balance' => 1000]);
         $fund->save(false);
 
         $controller = new StatisticsController('statistics', Yii::$app);
+        $controller->layout = false;
+        Yii::$app->controller = $controller;
 
         // 使用反射调用私有方法
         $reflection = new \ReflectionClass($controller);
@@ -251,15 +271,16 @@ class StatisticsControllerTest extends \Codeception\Test\Unit
     public function testReturnRateCalculationPrecision()
     {
         // 创建基金
-        $fund = new Fund(['name' => '测试基金', 'allocation_percentage' => 100, 'balance' => 10350]);
+        $fund = new Fund(['name' => '测试基金', 'allocation_percent' => 100, 'current_balance' => 10350]);
         $fund->save(false);
 
         // 创建产品
-        $product = new InvestmentProduct(['name' => '产品', 'description' => '测试', 'status' => InvestmentProduct::STATUS_ACTIVE]);
+        $product = new InvestmentProduct(['type' => InvestmentProduct::TYPE_OTHER, 'name' => '产品', 'description' => '测试', 'status' => InvestmentProduct::STATUS_ACTIVE]);
         $product->save(false);
 
         // 创建投资记录
         $investment = new Investment([
+            'investment_date' => date('Y-m-d'),
             'fund_id' => $fund->id,
             'product_id' => $product->id,
             'amount' => 10000,
@@ -269,12 +290,16 @@ class StatisticsControllerTest extends \Codeception\Test\Unit
 
         // 创建收益分配记录 (3.5% 收益率)
         $distribution = new ReturnDistribution([
+            'return_id' => $this->createReturn()->id,
+            'percent' => 100,
             'fund_id' => $fund->id,
             'amount' => 350,
         ]);
         $distribution->save(false);
 
         $controller = new StatisticsController('statistics', Yii::$app);
+        $controller->layout = false;
+        Yii::$app->controller = $controller;
 
         // 使用反射调用私有方法
         $reflection = new \ReflectionClass($controller);
@@ -283,6 +308,25 @@ class StatisticsControllerTest extends \Codeception\Test\Unit
 
         $result = $method->invoke($controller);
 
-        $this->assertEquals(3.5, $result[0]['rate'], 'rate should be 3.5%');
+        $this->assertEqualsWithDelta(3.5, $result[0]['rate'], 0.000001, 'rate should be 3.5%');
+    }
+
+    private function createProduct()
+    {
+        $product = new InvestmentProduct(['name' => '收益产品', 'type' => InvestmentProduct::TYPE_OTHER]);
+        $this->assertTrue($product->save());
+        return $product;
+    }
+
+    private function createReturn()
+    {
+        $record = new ReturnRecord([
+            'product_id' => $this->createProduct()->id,
+            'total_amount' => 1000,
+            'return_date' => date('Y-m-d'),
+            'is_distributed' => 1,
+        ]);
+        $this->assertTrue($record->save());
+        return $record;
     }
 }

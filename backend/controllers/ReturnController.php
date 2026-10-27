@@ -9,6 +9,7 @@ use yii\data\ActiveDataProvider;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii\filters\AccessControl;
 use yii\helpers\ArrayHelper;
 
 /**
@@ -22,6 +23,12 @@ class ReturnController extends Controller
     public function behaviors()
     {
         return [
+            'access' => [
+                'class' => AccessControl::class,
+                'rules' => [
+                    ['allow' => true, 'roles' => ['@']],
+                ],
+            ],
             'verbs' => [
                 'class' => VerbFilter::class,
                 'actions' => [
@@ -179,9 +186,9 @@ class ReturnController extends Controller
             fputcsv($output, [
                 $return->id,
                 $return->product->name ?? '',
-                $return->amount,
+                $return->total_amount,
                 $return->return_date,
-                $return->note,
+                $return->notes,
                 $return->is_distributed ? '是' : '否',
                 date('Y-m-d H:i:s', $return->created_at),
             ]);

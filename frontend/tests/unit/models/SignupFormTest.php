@@ -32,11 +32,11 @@ class SignupFormTest extends \Codeception\Test\Unit
 
         $user = $model->signup();
 
-        expect($user)->isInstanceOf('common\models\User');
+        $this->assertInstanceOf('common\models\User', $user);
 
-        expect($user->username)->equals('some_username');
-        expect($user->email)->equals('some_email@example.com');
-        expect($user->validatePassword('some_password'))->true();
+        $this->assertEquals('some_username', $user->username);
+        $this->assertEquals('some_email@example.com', $user->email);
+        $this->assertTrue($user->validatePassword('some_password'));
     }
 
     public function testNotCorrectSignup()
@@ -47,13 +47,11 @@ class SignupFormTest extends \Codeception\Test\Unit
             'password' => 'some_password',
         ]);
 
-        expect_not($model->signup());
-        expect_that($model->getErrors('username'));
-        expect_that($model->getErrors('email'));
+        $this->assertEmpty($model->signup());
+        $this->assertNotEmpty($model->getErrors('username'));
+        $this->assertNotEmpty($model->getErrors('email'));
 
-        expect($model->getFirstError('username'))
-            ->equals('This username has already been taken.');
-        expect($model->getFirstError('email'))
-            ->equals('This email address has already been taken.');
+        $this->assertEquals('This username has already been taken.', $model->getFirstError('username'));
+        $this->assertEquals('This email address has already been taken.', $model->getFirstError('email'));
     }
 }

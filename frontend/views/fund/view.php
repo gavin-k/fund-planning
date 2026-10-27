@@ -28,7 +28,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 <div class="col-md-3 text-center">
                     <div style="font-size: 14px; color: #999;">当前余额</div>
                     <div style="font-size: 32px; color: #5cb85c; margin: 10px 0;">
-                        <strong>¥<?= number_format($fund->balance, 2) ?></strong>
+                        <strong>¥<?= number_format($fund->current_balance, 2) ?></strong>
                     </div>
                 </div>
                 <div class="col-md-3 text-center">
@@ -46,7 +46,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 <div class="col-md-3 text-center">
                     <div style="font-size: 14px; color: #999;">分配比例</div>
                     <div style="font-size: 32px; color: #d9534f; margin: 10px 0;">
-                        <strong><?= $fund->allocation_percentage ?>%</strong>
+                        <strong><?= $fund->allocation_percent ?>%</strong>
                     </div>
                 </div>
             </div>

@@ -4,6 +4,7 @@ namespace backend\controllers;
 use Yii;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
+use yii\filters\AccessControl;
 use backend\components\ChartHelper;
 use common\models\Fund;
 use common\models\Income;
@@ -20,6 +21,12 @@ class StatisticsController extends Controller
     public function behaviors()
     {
         return [
+            'access' => [
+                'class' => AccessControl::class,
+                'rules' => [
+                    ['allow' => true, 'roles' => ['@']],
+                ],
+            ],
             'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [
@@ -47,7 +54,7 @@ class StatisticsController extends Controller
         $periodReturn = ReturnRecord::find()
             ->where(['>=', 'return_date', $startDate])
             ->andWhere(['<=', 'return_date', $endDate])
-            ->sum('amount') ?: 0;
+            ->sum('total_amount') ?: 0;
 
         $periodInvestment = Investment::find()
             ->where(['>=', 'created_at', strtotime($startDate)])
@@ -59,7 +66,7 @@ class StatisticsController extends Controller
             ->where(['status' => Investment::STATUS_ACTIVE])
             ->sum('amount') ?: 0;
 
-        $totalReturn = ReturnRecord::find()->sum('amount') ?: 0;
+        $totalReturn = ReturnRecord::find()->sum('total_amount') ?: 0;
         $returnRate = $totalInvestment > 0 ? ($totalReturn / $totalInvestment * 100) : 0;
 
         // 各基金收益率
@@ -128,7 +135,7 @@ class StatisticsController extends Controller
                 'invested' => $invested,
                 'returns' => $returns,
                 'rate' => $rate,
-                'balance' => $fund->balance,
+                'balance' => $fund->current_balance,
             ];
         }
 
