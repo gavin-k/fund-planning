@@ -29,8 +29,8 @@ class LoginCest
         $I->fillField('Password', 'password_0');
         $I->click('login-button');
 
-        $I->see('Logout (erau)', 'form button[type=submit]');
-        $I->dontSeeLink('Login');
-        $I->dontSeeLink('Signup');
+        $I->see('退出 (erau)', 'form button[type=submit]');
+        $I->dontSeeLink('登录');
+        $I->dontSeeLink('注册');
     }
 }

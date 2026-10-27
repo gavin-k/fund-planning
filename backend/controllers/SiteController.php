@@ -66,12 +66,12 @@ class SiteController extends Controller
     public function actionIndex()
     {
         // 1. 总资产统计
-        $totalAssets = Fund::find()->sum('balance') ?: 0;
+        $totalAssets = Fund::find()->sum('current_balance') ?: 0;
 
         // 2. 各基金余额
         $funds = Fund::find()
-            ->select(['id', 'name', 'balance', 'allocation_percentage'])
-            ->orderBy(['allocation_percentage' => SORT_DESC])
+            ->select(['id', 'name', 'current_balance', 'allocation_percent'])
+            ->orderBy(['allocation_percent' => SORT_DESC])
             ->all();
 
         // 3. 总投资金额
@@ -87,7 +87,7 @@ class SiteController extends Controller
         // 5. 本月收益
         $monthlyReturn = ReturnRecord::find()
             ->where(['>=', 'return_date', date('Y-m-01')])
-            ->sum('amount') ?: 0;
+            ->sum('total_amount') ?: 0;
 
         // 6. 最近收入记录（最近5条）
         $recentIncomes = Income::find()

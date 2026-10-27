@@ -48,7 +48,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <div class="row">
         <?php foreach ($funds as $fund): ?>
             <?php
-                $percentage = $totalAssets > 0 ? ($fund->balance / $totalAssets * 100) : 0;
+                $percentage = $totalAssets > 0 ? ($fund->current_balance / $totalAssets * 100) : 0;
                 $investedAmount = $fund->getInvestedAmount();
                 $availableBalance = $fund->getAvailableBalance();
             ?>
@@ -57,7 +57,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     <div class="panel-heading">
                         <h3 class="panel-title">
                             <strong><?= Html::encode($fund->name) ?></strong>
-                            <small class="pull-right">分配比例: <?= $fund->allocation_percentage ?>%</small>
+                            <small class="pull-right">分配比例: <?= $fund->allocation_percent ?>%</small>
                         </h3>
                     </div>
                     <div class="panel-body">
@@ -66,7 +66,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                 <div class="col-xs-6 text-center">
                                     <div style="font-size: 12px; color: #999;">当前余额</div>
                                     <div style="font-size: 24px; color: #5cb85c;">
-                                        <strong>¥<?= number_format($fund->balance, 2) ?></strong>
+                                        <strong>¥<?= number_format($fund->current_balance, 2) ?></strong>
                                     </div>
                                 </div>
                                 <div class="col-xs-6 text-center">

@@ -36,16 +36,16 @@ class ChartHelper
     {
         $funds = Fund::find()
             ->where(['status' => Fund::STATUS_ACTIVE])
-            ->orderBy(['balance' => SORT_DESC])
+            ->orderBy(['current_balance' => SORT_DESC])
             ->all();
 
         $labels = [];
         $data = [];
 
         foreach ($funds as $fund) {
-            if ($fund->balance > 0) {
+            if ($fund->current_balance > 0) {
                 $labels[] = $fund->name;
-                $data[] = (float)$fund->balance;
+                $data[] = (float)$fund->current_balance;
             }
         }
 
@@ -70,21 +70,24 @@ class ChartHelper
         $returnData = [];
 
         // 计算12个月前的日期
-        $startDate = date('Y-m-01', strtotime('-11 months'));
+        $monthStart = strtotime(date('Y-m-01'));
+        $startDate = date('Y-m-01', strtotime('-11 months', $monthStart));
+        $incomeMonth = self::monthExpression('income_date');
+        $returnMonth = self::monthExpression('return_date');
 
         // 一次性查询所有收入数据并按月分组
         $incomes = Income::find()
-            ->select(['DATE_FORMAT(income_date, "%Y-%m") as month', 'SUM(amount) as total'])
+            ->select(['month' => new \yii\db\Expression($incomeMonth), 'total' => new \yii\db\Expression('SUM(amount)')])
             ->where(['>=', 'income_date', $startDate])
-            ->groupBy('DATE_FORMAT(income_date, "%Y-%m")')
+            ->groupBy(new \yii\db\Expression($incomeMonth))
             ->asArray()
             ->all();
 
         // 一次性查询所有收益数据并按月分组
         $returns = ReturnRecord::find()
-            ->select(['DATE_FORMAT(return_date, "%Y-%m") as month', 'SUM(amount) as total'])
+            ->select(['month' => new \yii\db\Expression($returnMonth), 'total' => new \yii\db\Expression('SUM(total_amount)')])
             ->where(['>=', 'return_date', $startDate])
-            ->groupBy('DATE_FORMAT(return_date, "%Y-%m")')
+            ->groupBy(new \yii\db\Expression($returnMonth))
             ->asArray()
             ->all();
 
@@ -101,7 +104,7 @@ class ChartHelper
 
         // 生成最近12个月的数据
         for ($i = 11; $i >= 0; $i--) {
-            $date = date('Y-m', strtotime("-$i month"));
+            $date = date('Y-m', strtotime("-$i month", $monthStart));
             $labels[] = $date;
             $incomeData[] = $incomeMap[$date] ?? 0.0;
             $returnData[] = $returnMap[$date] ?? 0.0;
@@ -220,17 +223,20 @@ class ChartHelper
         $investmentData = [];
 
         // 一次性查询该年度所有收入数据
+        $incomeMonth = self::monthExpression('income_date');
+        $investmentMonth = self::monthExpression('created_at', true);
         $incomes = Income::find()
-            ->select(['MONTH(income_date) as month', 'SUM(amount) as total'])
-            ->where(['like', 'income_date', $year])
-            ->groupBy('MONTH(income_date)')
+            ->select(['month' => new \yii\db\Expression($incomeMonth), 'total' => new \yii\db\Expression('SUM(amount)')])
+            ->where(['>=', 'income_date', $year . '-01-01'])
+            ->andWhere(['<', 'income_date', ($year + 1) . '-01-01'])
+            ->groupBy(new \yii\db\Expression($incomeMonth))
             ->asArray()
             ->all();
 
         // 转换为以月份为键的数组
         $incomeMap = [];
         foreach ($incomes as $income) {
-            $incomeMap[(int)$income['month']] = (float)$income['total'];
+            $incomeMap[(int)substr($income['month'], 5, 2)] = (float)$income['total'];
         }
 
         // 一次性查询该年度所有投资数据
@@ -238,17 +244,17 @@ class ChartHelper
         $yearEnd = strtotime(($year + 1) . '-01-01');
 
         $investments = Investment::find()
-            ->select(['MONTH(FROM_UNIXTIME(created_at)) as month', 'SUM(amount) as total'])
+            ->select(['month' => new \yii\db\Expression($investmentMonth), 'total' => new \yii\db\Expression('SUM(amount)')])
             ->where(['>=', 'created_at', $yearStart])
             ->andWhere(['<', 'created_at', $yearEnd])
-            ->groupBy('MONTH(FROM_UNIXTIME(created_at))')
+            ->groupBy(new \yii\db\Expression($investmentMonth))
             ->asArray()
             ->all();
 
         // 转换为以月份为键的数组
         $investmentMap = [];
         foreach ($investments as $investment) {
-            $investmentMap[(int)$investment['month']] = (float)$investment['total'];
+            $investmentMap[(int)substr($investment['month'], 5, 2)] = (float)$investment['total'];
         }
 
         // 生成12个月的数据
@@ -273,6 +279,23 @@ class ChartHelper
                 ],
             ],
         ];
+    }
+
+    /** SQL month grouping for the supported database drivers. */
+    private static function monthExpression($column, $unixTimestamp = false)
+    {
+        $column = Yii::$app->db->quoteColumnName($column);
+        switch (Yii::$app->db->driverName) {
+            case 'pgsql':
+                $date = $unixTimestamp ? "to_timestamp($column)" : $column;
+                return "to_char($date, 'YYYY-MM')";
+            case 'sqlite':
+                $modifier = $unixTimestamp ? ", 'unixepoch'" : '';
+                return "strftime('%Y-%m', $column$modifier)";
+            default:
+                $date = $unixTimestamp ? "FROM_UNIXTIME($column)" : $column;
+                return "DATE_FORMAT($date, '%Y-%m')";
+        }
     }
 
     /**

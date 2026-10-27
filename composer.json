@@ -29,7 +29,8 @@
         "codeception/module-asserts": "^3.0",
         "codeception/module-yii2": "^1.0",
         "phpunit/phpunit": "^12.5.8",
-        "psy/psysh": "^0.12.19"
+        "psy/psysh": "^0.12.19",
+        "codeception/module-filesystem": "^3.0"
     },
     "config": {
         "process-timeout": 1800,

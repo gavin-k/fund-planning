@@ -178,10 +178,9 @@ class Investment extends ActiveRecord
                 $this->product->updateCurrentAmount();
             }
 
-            // 资金返回基金
-            if ($this->fund) {
-                $this->fund->addBalance($this->amount);
-            }
+            // current_balance already includes invested principal. Marking the
+            // investment withdrawn releases it through getAvailableBalance();
+            // crediting it again would create money on every withdrawal.
 
             $transaction->commit();
             return true;

@@ -26,17 +26,17 @@ $this->params['breadcrumbs'][] = $this->title;
             'id',
             'name',
             [
-                'attribute' => 'allocation_percentage',
+                'attribute' => 'allocation_percent',
                 'label' => '分配比例',
                 'value' => function ($model) {
-                    return $model->allocation_percentage . '%';
+                    return $model->allocation_percent . '%';
                 },
             ],
             [
-                'attribute' => 'balance',
+                'attribute' => 'current_balance',
                 'label' => '当前余额',
                 'value' => function ($model) {
-                    return '¥' . number_format($model->balance, 2);
+                    return '¥' . number_format($model->current_balance, 2);
                 },
             ],
             [

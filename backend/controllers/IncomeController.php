@@ -8,6 +8,7 @@ use yii\data\ActiveDataProvider;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii\filters\AccessControl;
 
 /**
  * IncomeController implements the CRUD actions for Income model.
@@ -20,6 +21,12 @@ class IncomeController extends Controller
     public function behaviors()
     {
         return [
+            'access' => [
+                'class' => AccessControl::class,
+                'rules' => [
+                    ['allow' => true, 'roles' => ['@']],
+                ],
+            ],
             'verbs' => [
                 'class' => VerbFilter::class,
                 'actions' => [
@@ -176,7 +183,7 @@ class IncomeController extends Controller
                 $income->id,
                 $income->income_date,
                 $income->amount,
-                $income->note,
+                $income->notes,
                 $income->is_distributed ? '是' : '否',
                 date('Y-m-d H:i:s', $income->created_at),
             ]);

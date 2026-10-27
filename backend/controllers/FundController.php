@@ -8,6 +8,7 @@ use yii\data\ActiveDataProvider;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii\filters\AccessControl;
 
 /**
  * FundController implements the CRUD actions for Fund model.
@@ -20,6 +21,12 @@ class FundController extends Controller
     public function behaviors()
     {
         return [
+            'access' => [
+                'class' => AccessControl::class,
+                'rules' => [
+                    ['allow' => true, 'roles' => ['@']],
+                ],
+            ],
             'verbs' => [
                 'class' => VerbFilter::class,
                 'actions' => [
@@ -160,8 +167,8 @@ class FundController extends Controller
             fputcsv($output, [
                 $fund->id,
                 $fund->name,
-                $fund->allocation_percentage,
-                $fund->balance,
+                $fund->allocation_percent,
+                $fund->current_balance,
                 $investedAmount,
                 $availableBalance,
                 $fund->status == Fund::STATUS_ACTIVE ? '启用' : '禁用',

@@ -132,7 +132,7 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.um
             <?php if (!empty($funds)): ?>
                 <?php foreach ($funds as $fund): ?>
                     <?php
-                        $percentage = $totalAssets > 0 ? ($fund->balance / $totalAssets * 100) : 0;
+                        $percentage = $totalAssets > 0 ? ($fund->current_balance / $totalAssets * 100) : 0;
                         $progressBarClass = 'progress-bar-success';
                         if ($percentage < 5) {
                             $progressBarClass = 'progress-bar-danger';
@@ -143,11 +143,11 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.um
                     <div class="row" style="margin-bottom: 15px;">
                         <div class="col-md-3">
                             <strong><?= Html::a(Html::encode($fund->name), ['fund/view', 'id' => $fund->id]) ?></strong>
-                            <small class="text-muted">(分配比例: <?= $fund->allocation_percentage ?>%)</small>
+                            <small class="text-muted">(分配比例: <?= $fund->allocation_percent ?>%)</small>
                         </div>
                         <div class="col-md-3 text-right">
                             <span class="text-success" style="font-size: 16px;">
-                                <strong>¥<?= number_format($fund->balance, 2) ?></strong>
+                                <strong>¥<?= number_format($fund->current_balance, 2) ?></strong>
                             </span>
                         </div>
                         <div class="col-md-6">
@@ -194,7 +194,7 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.um
                                             <strong class="text-success">+¥<?= number_format($income->amount, 2) ?></strong>
                                         </td>
                                         <td>
-                                            <?= Html::encode($income->note ? mb_substr($income->note, 0, 20) . (mb_strlen($income->note) > 20 ? '...' : '') : '-') ?>
+                                            <?= Html::encode($income->notes ? mb_substr($income->notes, 0, 20) . (mb_strlen($income->notes) > 20 ? '...' : '') : '-') ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

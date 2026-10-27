@@ -59,13 +59,13 @@ class ChartHelperTest extends \Codeception\Test\Unit
     public function testGetFundBalanceChartDataWithData()
     {
         // 创建测试基金
-        $fund1 = new Fund(['name' => '基金A', 'allocation_percentage' => 40, 'balance' => 5000, 'status' => Fund::STATUS_ACTIVE]);
+        $fund1 = new Fund(['name' => '基金A', 'allocation_percent' => 40, 'current_balance' => 5000, 'status' => Fund::STATUS_ACTIVE]);
         $fund1->save(false);
 
-        $fund2 = new Fund(['name' => '基金B', 'allocation_percentage' => 30, 'balance' => 3000, 'status' => Fund::STATUS_ACTIVE]);
+        $fund2 = new Fund(['name' => '基金B', 'allocation_percent' => 30, 'current_balance' => 3000, 'status' => Fund::STATUS_ACTIVE]);
         $fund2->save(false);
 
-        $fund3 = new Fund(['name' => '基金C', 'allocation_percentage' => 30, 'balance' => 0, 'status' => Fund::STATUS_ACTIVE]);
+        $fund3 = new Fund(['name' => '基金C', 'allocation_percent' => 30, 'current_balance' => 0, 'status' => Fund::STATUS_ACTIVE]);
         $fund3->save(false);
 
         $data = ChartHelper::getFundBalanceChartData();
@@ -112,16 +112,16 @@ class ChartHelperTest extends \Codeception\Test\Unit
             'source' => '工资',
             'amount' => 10000,
             'income_date' => date('Y-m-15'),
-            'status' => Income::STATUS_DISTRIBUTED,
+            'is_distributed' => 1,
         ]);
         $income->save(false);
 
         // 创建收益记录
         $return = new ReturnRecord([
-            'source' => '投资收益',
-            'amount' => 500,
+            'product_id' => $this->createProduct()->id,
+            'total_amount' => 500,
             'return_date' => date('Y-m-20'),
-            'status' => ReturnRecord::STATUS_DISTRIBUTED,
+            'is_distributed' => 1,
         ]);
         $return->save(false);
 
@@ -144,18 +144,19 @@ class ChartHelperTest extends \Codeception\Test\Unit
     public function testGetInvestmentDistributionData()
     {
         // 创建基金
-        $fund = new Fund(['name' => '测试基金', 'allocation_percentage' => 100, 'balance' => 10000]);
+        $fund = new Fund(['name' => '测试基金', 'allocation_percent' => 100, 'current_balance' => 10000]);
         $fund->save(false);
 
         // 创建投资产品
-        $product1 = new InvestmentProduct(['name' => '产品A', 'description' => '测试产品A', 'status' => InvestmentProduct::STATUS_ACTIVE]);
+        $product1 = new InvestmentProduct(['type' => InvestmentProduct::TYPE_OTHER, 'name' => '产品A', 'description' => '测试产品A', 'status' => InvestmentProduct::STATUS_ACTIVE]);
         $product1->save(false);
 
-        $product2 = new InvestmentProduct(['name' => '产品B', 'description' => '测试产品B', 'status' => InvestmentProduct::STATUS_ACTIVE]);
+        $product2 = new InvestmentProduct(['type' => InvestmentProduct::TYPE_OTHER, 'name' => '产品B', 'description' => '测试产品B', 'status' => InvestmentProduct::STATUS_ACTIVE]);
         $product2->save(false);
 
         // 创建投资记录
         $inv1 = new Investment([
+            'investment_date' => date('Y-m-d'),
             'fund_id' => $fund->id,
             'product_id' => $product1->id,
             'amount' => 3000,
@@ -164,6 +165,7 @@ class ChartHelperTest extends \Codeception\Test\Unit
         $inv1->save(false);
 
         $inv2 = new Investment([
+            'investment_date' => date('Y-m-d'),
             'fund_id' => $fund->id,
             'product_id' => $product2->id,
             'amount' => 2000,
@@ -187,18 +189,19 @@ class ChartHelperTest extends \Codeception\Test\Unit
     public function testGetFundInvestmentChartData()
     {
         // 创建基金
-        $fund1 = new Fund(['name' => '基金A', 'allocation_percentage' => 50, 'balance' => 5000]);
+        $fund1 = new Fund(['name' => '基金A', 'allocation_percent' => 50, 'current_balance' => 5000]);
         $fund1->save(false);
 
-        $fund2 = new Fund(['name' => '基金B', 'allocation_percentage' => 50, 'balance' => 5000]);
+        $fund2 = new Fund(['name' => '基金B', 'allocation_percent' => 50, 'current_balance' => 5000]);
         $fund2->save(false);
 
         // 创建产品
-        $product = new InvestmentProduct(['name' => '产品', 'description' => '测试产品', 'status' => InvestmentProduct::STATUS_ACTIVE]);
+        $product = new InvestmentProduct(['type' => InvestmentProduct::TYPE_OTHER, 'name' => '产品', 'description' => '测试产品', 'status' => InvestmentProduct::STATUS_ACTIVE]);
         $product->save(false);
 
         // 创建投资记录
         $inv1 = new Investment([
+            'investment_date' => date('Y-m-d'),
             'fund_id' => $fund1->id,
             'product_id' => $product->id,
             'amount' => 4000,
@@ -207,6 +210,7 @@ class ChartHelperTest extends \Codeception\Test\Unit
         $inv1->save(false);
 
         $inv2 = new Investment([
+            'investment_date' => date('Y-m-d'),
             'fund_id' => $fund2->id,
             'product_id' => $product->id,
             'amount' => 3000,
@@ -254,7 +258,7 @@ class ChartHelperTest extends \Codeception\Test\Unit
             'source' => '工资',
             'amount' => 5000,
             'income_date' => $lastYear . '-06-15',
-            'status' => Income::STATUS_DISTRIBUTED,
+            'is_distributed' => 1,
         ]);
         $income->save(false);
 
@@ -276,8 +280,8 @@ class ChartHelperTest extends \Codeception\Test\Unit
         for ($i = 1; $i <= 15; $i++) {
             $fund = new Fund([
                 'name' => "基金{$i}",
-                'allocation_percentage' => 1,
-                'balance' => 1000,
+                'allocation_percent' => 1,
+                'current_balance' => 1000,
                 'status' => Fund::STATUS_ACTIVE,
             ]);
             $fund->save(false);
@@ -294,5 +298,24 @@ class ChartHelperTest extends \Codeception\Test\Unit
             $data['datasets'][0]['backgroundColor'][9],
             'colors should cycle after 9'
         );
+    }
+
+    private function createProduct()
+    {
+        $product = new InvestmentProduct(['name' => '收益产品', 'type' => InvestmentProduct::TYPE_OTHER]);
+        $this->assertTrue($product->save());
+        return $product;
+    }
+
+    private function createReturn()
+    {
+        $record = new ReturnRecord([
+            'product_id' => $this->createProduct()->id,
+            'total_amount' => 1000,
+            'return_date' => date('Y-m-d'),
+            'is_distributed' => 1,
+        ]);
+        $this->assertTrue($record->save());
+        return $record;
     }
 }

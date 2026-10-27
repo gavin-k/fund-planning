@@ -38,11 +38,11 @@ class FundController extends Controller
     {
         $funds = Fund::find()
             ->where(['status' => Fund::STATUS_ACTIVE])
-            ->orderBy(['allocation_percentage' => SORT_DESC])
+            ->orderBy(['allocation_percent' => SORT_DESC])
             ->all();
 
         // 计算总资产
-        $totalAssets = Fund::find()->sum('balance') ?: 0;
+        $totalAssets = Fund::find()->sum('current_balance') ?: 0;
 
         // 总投资
         $totalInvestment = Investment::find()
